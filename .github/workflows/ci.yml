@@ -1,0 +1,38 @@
+name: To-Do App CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: ⬇️ Checkout code
+      uses: actions/checkout@v3
+
+    - name: 🔧 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 📦 Install flake8
+      run: pip install flake8
+
+    - name: 🧪 Lint code
+      continue-on-error: true
+      run: flake8 app/ --ignore=E501,W503
+
+    - name: 🐳 Build Docker image
+      run: docker build -t todo-app .
+
+    - name: 🚀 Run container
+      run: |
+        docker run -d -p 5000:5000 --name todo-test todo-app
+        sleep 5
+
+    - name: ✅ Curl homepage
+      run: curl --fail http://localhost:5000 | grep "To-Do Task Manager"
